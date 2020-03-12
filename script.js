@@ -1,97 +1,73 @@
 'use strict'
 
-window.addEventListener('DOMContentLoaded', () => {
-  let rawData = {}
-  let info = {}
+$(function () {
+
+  let modal = $('#modal')
+  let apiLink = 'https://rickandmortyapi.com/api/character/'
   let list = []
+  let info = null
 
-  fetchData ('https://rickandmortyapi.com/api/character/')
+  modal.hide()
+  loadData(apiLink)
 
-  let loadButton = document.querySelector('.load-more')
-  loadButton.addEventListener('click', () => {
-    loadButton.innerText = 'loading...'
-    loadButton.setAttribute('disabled', 'true')
-    fetchData(info.next)
-  })  
+  $(document).on('click', '.list-item', function (e) {
+    let index = $(this).data('index')
+    fillModal(index)
+    modal.show()
+  })
 
-  function renderList(data) {
-    rawData = data
-    list = [ ...list, ...rawData.results ]
-    info = rawData.info
-    const listContainer = document.querySelector('#list')
-    const hideModalButton = document.querySelector('#hide-modal')
+  $('.hide-modal').on('click', function () {
+    modal.hide()
+  })
 
-    hideModalButton.addEventListener('click', hideModal)
+  $('.load-more').on('click', function () {
+    loadData(info.next)
+  })
 
-    document.querySelector('.total').innerText = info.count
-    document.querySelector('.current').innerText = list.length
-    
-    document.querySelector('.preloader').style.display = 'none'
-    listContainer.innerHTML = ''
+  function loadData (apiLink) {
+    $.get( apiLink, function (data) {
+      list = [...list, ...data.results]
+      info = data.info
 
-    list.forEach((character, i) => {
-      let listItem = document.createElement('div')
-      listItem.classList.add('list-item')
-      listItem.setAttribute('data-id', i)
-      listItem.innerHTML += `
-      <div>${ i + 1 }. ${ character.name } </div>
-      <div>
-        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-        viewBox="0 0 511.995 511.995" style="enable-background:new 0 0 511.995 511.995;" xml:space="preserve">
-        <path d="M381.039,248.62L146.373,3.287c-4.083-4.229-10.833-4.417-15.083-0.333c-4.25,4.073-4.396,10.823-0.333,15.083
-          L358.56,255.995L130.956,493.954c-4.063,4.26-3.917,11.01,0.333,15.083c2.063,1.979,4.729,2.958,7.375,2.958
-          c2.813,0,5.604-1.104,7.708-3.292L381.039,263.37C384.977,259.245,384.977,252.745,381.039,248.62z"/>
-        </svg>
-      </div>
-      `
-      listItem.addEventListener('click', e => showModal(i, e))
-      listContainer.appendChild(listItem)
+      fillStats()
+      renderList()
+
     })
-
-    loadButton.innerText = 'Load More'
-    loadButton.removeAttribute('disabled')
   }
 
-  function fetchData (url) {
-    fetch(url)
-    .then(response => {
-      if (response.status !== 200) {
-        console.log('sorry, error...')
-      } else {
-        return response.json()
-      }
+  function fillStats () {
+    $('.loaded-chars').text(list.length)
+    $('.total-chars').text(info.count)
+  }
+
+  function renderList () {
+    $('#list').html('')
+    $.each(list, function (index, item) {
+      let row = `<div class="list-item" data-index="${index}">
+        <div>${ index + 1 }. ${ item.name }</div>
+        <div>
+          <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+            viewBox="0 0 511.995 511.995" style="enable-background:new 0 0 511.995 511.995;" xml:space="preserve">
+            <path d="M381.039,248.62L146.373,3.287c-4.083-4.229-10.833-4.417-15.083-0.333c-4.25,4.073-4.396,10.823-0.333,15.083
+              L358.56,255.995L130.956,493.954c-4.063,4.26-3.917,11.01,0.333,15.083c2.063,1.979,4.729,2.958,7.375,2.958
+              c2.813,0,5.604-1.104,7.708-3.292L381.039,263.37C384.977,259.245,384.977,252.745,381.039,248.62z"/>
+          </svg>
+        </div>
+      </div>`
+      $('#list').append(row)
     })
-    .then(json => {
-      renderList(json)
-      document.querySelector('.progress').style.transform = `translateX(${ list.length / (120 * 0.01) }%)`
-      if (!info.next.length) loadButton.remove()
-      if (list.length < 120) {
-        fetchData (info.next)
-      } else {
-        setTimeout(() => {
-          document.querySelector('.progress-bar').style.display = 'none'
-        }, 300)
-      }
-    })
-    .catch(err => console.log(err))
   }
 
-  function showModal (id, e) {
-    let char = list[id]
-
-    document.querySelector('.window-title').innerText = char.name
-    document.querySelector('.char-name').innerText = char.name
-    document.querySelector('.status').innerText = char.status
-    document.querySelector('.species').innerText = char.species
-    document.querySelector('.gender').innerText = char.gender
-    document.querySelector('.origin').innerText = char.origin.name
-    
-    document.querySelector('.avatar-img').setAttribute('src', char.image)
-
-    document.querySelector('#modal').classList.remove('hide')
+  function fillModal (index) {
+    let char = list[index]
+    console.log(char)
   }
 
-  function hideModal () {
-    document.querySelector('#modal').classList.add('hide')
-  }
+  // function showModal() {
+  //  modal.show()
+  // }
+  // function hideModal() {
+  //  modal.hide()
+  // }
+  
 })
